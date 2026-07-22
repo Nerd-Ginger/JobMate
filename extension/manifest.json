@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "JobMate Companion",
+  "version": "0.1.0",
+  "description": "Capture job postings and autofill applications for the JobMate tracker. Serverless — data flows through your browser only.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "JobMate Companion"
+  },
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:5173/*",
+        "http://localhost:4173/*",
+        "https://*.github.io/*",
+        "https://*.netlify.app/*",
+        "https://*.vercel.app/*",
+        "https://*.pages.dev/*"
+      ],
+      "js": ["bridge.js"]
+    }
+  ],
+  "icons": { "128": "icon.svg" }
+}

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAppStore } from './store/useAppStore'
+import { processInbox, publishOutbox } from './lib/bridge'
+import { handleOAuthRedirect } from './lib/sync/googleDrive'
 import type { View } from './types-ui'
 import type { ParsedPosting } from './lib/import/types'
 import Header from './components/Header'
@@ -21,9 +23,33 @@ export default function App() {
   // undefined: closed; ParsedPosting|null: create modal (with/without prefill)
   const [createModal, setCreateModal] = useState<ParsedPosting | null | undefined>(undefined)
 
+  const profile = useAppStore((s) => s.profile)
+
   useEffect(() => {
     void load()
   }, [load])
+
+  // Bridge: import any jobs the companion extension captured, then keep the
+  // profile published for autofill.
+  useEffect(() => {
+    if (!loaded) return
+    const { applications, addApplication } = useAppStore.getState()
+    const urls = new Set(applications.map((a) => a.url).filter(Boolean) as string[])
+    void processInbox(urls, addApplication)
+  }, [loaded])
+
+  useEffect(() => {
+    if (loaded) publishOutbox(profile)
+  }, [loaded, profile])
+
+  // Complete a Google Drive OAuth redirect if we came back with a code.
+  useEffect(() => {
+    if (!loaded) return
+    const clientId = useAppStore.getState().settings.oauth?.googleClientId
+    if (clientId && new URLSearchParams(window.location.search).has('code')) {
+      handleOAuthRedirect(clientId).catch(() => {})
+    }
+  }, [loaded])
 
   return (
     <div className="flex h-full flex-col">

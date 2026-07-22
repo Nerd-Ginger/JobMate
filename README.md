@@ -1,33 +1,68 @@
 # JobMate
 
-A backend-free, client-side job-application tracker. All data lives on your device (IndexedDB) — no accounts, no servers. See [`JobTracker_Plan.md`](./JobTracker_Plan.md) for the full product plan.
+A backend-free, client-side job-application tracker and application accelerator.
+All data lives on your device (IndexedDB) — no accounts, no servers. Bring your
+own Anthropic API key for the AI features. See [`JobTracker_Plan.md`](./JobTracker_Plan.md)
+for the full product plan.
 
-## Status — Phase 1 (Board MVP)
+## Features
 
-The swim-lane board is implemented:
+**Board & tracking**
+- Swim-lane board (Wishlist → Applied → Screening → Interviewing → Offer → Closed)
+  with drag-and-drop; every move recorded to stage history
+- Dropping into *Closed* prompts for an outcome (Rejected / Withdrawn / Accepted)
+- Per-application interview log (rounds, type, interviewers, notes, outcome)
+- JSON export / import for full data ownership
 
-- **Swim lanes** — Wishlist → Applied → Screening → Interviewing → Offer → Closed
-- **Drag & drop** between lanes, each move recorded in the application's stage history
-- **Add / edit / delete** applications (company, role, lane, source, location, salary, remote, URL, notes)
-- **Outcome tagging** — dropping into *Closed* prompts for Rejected / Withdrawn / Accepted
-- **Local persistence** via IndexedDB (Dexie) — your board survives reloads
-- **JSON export / import** for full data ownership and backups
+**Import** — paste a job URL; the pipeline degrades gracefully:
+1. Greenhouse / Lever public JSON APIs (direct, no scraping)
+2. schema.org JobPosting JSON-LD via CORS proxy
+3. AI parse of the page (needs your key)
+4. Paste fallback — never a dead end
 
-Later phases (URL import, interview tracking, funnel metrics, Apply Kit, companion extension) are described in the plan.
+**Discover** — poll your watchlist of Greenhouse/Lever company boards plus
+Remotive & Himalayas remote feeds; dedupe, filter (keyword / remote / recency),
+one-click Track to Wishlist. Results cached 12h; nothing polls in the background.
+
+**Insights** — funnel with stage-to-stage conversion, average days per stage,
+interviews per application; weekly goal, week streak, milestone badges.
+
+**Apply Kit** (per application, BYO key) — cover letter, tailored resume bullets,
+screening answers, a fit check, and interview prep. Outputs are cached; a
+fit-check gate discourages spending on low-fit roles; a spend meter tracks
+estimated cost against an optional soft budget.
+
+**Companion extension** ([`extension/`](./extension)) — MV3, load-unpacked:
+capture any job page and autofill ATS applications from your profile. Serverless
+— data bridges through your browser's storage. See its README.
+
+**Cloud backup** (optional) — back up to your own Google Drive app-data folder
+via OAuth PKCE (bring your own client ID).
+
+**PWA** — installable, offline board.
+
+## Privacy & keys
+
+Everything is stored locally (IndexedDB `jobmate`). Your Anthropic API key is
+encrypted at rest with a passphrase (WebCrypto AES-GCM + PBKDF2), held in memory
+only for the session, and excluded from exports. No API call fires automatically
+— every AI request is behind an explicit button, and free import/discovery paths
+run before any paid one.
 
 ## Tech stack
 
-React 19 · TypeScript · Vite · Tailwind CSS v4 · dnd-kit · Dexie.js · Zustand
+React 19 · TypeScript · Vite · Tailwind CSS v4 · dnd-kit · Dexie.js · Zustand ·
+Recharts · vite-plugin-pwa · Anthropic API (direct from browser)
 
 ## Getting started
 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm run build    # type-check + production build
+npm run build    # type-check + production build (+ PWA service worker)
 npm run lint     # oxlint
 ```
 
-## Data & privacy
-
-Everything is stored locally in your browser's IndexedDB (database `jobmate`). Use **Export** to save a JSON backup; **Import** replaces the current on-device data with a backup's contents.
+Then, in the app: **Settings** → add your Anthropic API key and resume to enable
+the Apply Kit and AI import; add company board tokens to your watchlist for
+Discover.
