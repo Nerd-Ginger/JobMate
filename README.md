@@ -36,10 +36,10 @@ estimated cost against an optional soft budget.
 capture any job page and autofill ATS applications from your profile. Serverless
 — data bridges through your browser's storage. See its README.
 
-**Cloud backup** (optional) — back up to your own Google Drive app-data folder
-via OAuth PKCE (bring your own client ID).
-
 **PWA** — installable, offline board.
+
+Backup/restore is via JSON export/import (Settings → Export / Import) — full
+data ownership with no third-party account.
 
 ## Privacy & keys
 

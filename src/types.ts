@@ -150,8 +150,6 @@ export interface Settings {
   prices: ModelPrice[]
   // Optional keys for keyed discovery adapters (stored client-side).
   adapterKeys?: Record<string, string>
-  // Cloud-sync OAuth client IDs (user-supplied; see cloudSync).
-  oauth?: { googleClientId?: string; microsoftClientId?: string }
 }
 
 // ── AI cache (PRD §7.4) — key = hash(resume + jd + feature) ─────────────────

@@ -1,13 +1,6 @@
 import { useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { spend } from '../lib/metrics'
-import { buildExport, parseImport } from '../lib/exportImport'
-import {
-  connectGoogleDrive,
-  isDriveConnected,
-  backupToDrive,
-  restoreFromDrive,
-} from '../lib/sync/googleDrive'
 import { inputClass, labelClass, btnPrimary } from './ui'
 import type { WatchlistEntry } from '../types'
 
@@ -86,117 +79,9 @@ export default function SettingsView() {
         </Section>
 
         <WatchlistSection />
-        <CloudSyncSection />
         <ModelsSection />
       </div>
     </div>
-  )
-}
-
-function CloudSyncSection() {
-  const store = useAppStore()
-  const clientId = store.settings.oauth?.googleClientId ?? ''
-  const [busy, setBusy] = useState<string | null>(null)
-  const [msg, setMsg] = useState<string | null>(null)
-  const connected = isDriveConnected()
-
-  function setClientId(v: string) {
-    store.updateSettings({ oauth: { ...store.settings.oauth, googleClientId: v } })
-  }
-
-  async function backup() {
-    setBusy('backup')
-    setMsg(null)
-    try {
-      const json = JSON.stringify(
-        buildExport({
-          lanes: store.lanes,
-          applications: store.applications,
-          interviews: store.interviews,
-          events: store.events,
-          profile: store.profile,
-          settings: store.settings,
-        }),
-      )
-      await backupToDrive(json)
-      setMsg('Backed up to Google Drive.')
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Backup failed.')
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  async function restore() {
-    if (!window.confirm('Restore from Drive? This replaces all data on this device.')) return
-    setBusy('restore')
-    setMsg(null)
-    try {
-      const json = await restoreFromDrive()
-      if (!json) {
-        setMsg('No backup found in Drive.')
-        return
-      }
-      const parsed = parseImport(json)
-      await store.replaceAll({
-        lanes: parsed.lanes,
-        applications: parsed.applications,
-        interviews: parsed.interviews,
-        events: parsed.events,
-        profile: parsed.profile,
-        settings: parsed.settings,
-      })
-      setMsg('Restored from Drive.')
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Restore failed.')
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  return (
-    <Section
-      title="Cloud backup (optional)"
-      desc="Back up to your own Google Drive app-data folder via OAuth PKCE. Requires your own Google OAuth client ID with this app's URL as an authorized redirect URI."
-    >
-      <div>
-        <label className={labelClass}>Google OAuth client ID</label>
-        <input
-          className={inputClass}
-          value={clientId}
-          placeholder="xxxxx.apps.googleusercontent.com"
-          onChange={(e) => setClientId(e.target.value)}
-        />
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {connected ? (
-          <>
-            <button onClick={backup} disabled={busy !== null} className={btnPrimary}>
-              {busy === 'backup' ? 'Backing up…' : 'Back up now'}
-            </button>
-            <button
-              onClick={restore}
-              disabled={busy !== null}
-              className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 disabled:opacity-50"
-            >
-              {busy === 'restore' ? 'Restoring…' : 'Restore'}
-            </button>
-            <span className="flex items-center gap-1 text-sm text-emerald-400">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" /> Connected
-            </span>
-          </>
-        ) : (
-          <button
-            onClick={() => clientId && connectGoogleDrive(clientId)}
-            disabled={!clientId}
-            className={btnPrimary}
-          >
-            Connect Google Drive
-          </button>
-        )}
-      </div>
-      {msg && <p className="mt-2 text-sm text-slate-300">{msg}</p>}
-    </Section>
   )
 }
 

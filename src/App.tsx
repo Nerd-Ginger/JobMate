@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAppStore } from './store/useAppStore'
 import { processInbox, publishOutbox } from './lib/bridge'
-import { handleOAuthRedirect } from './lib/sync/googleDrive'
 import type { View } from './types-ui'
 import type { ParsedPosting } from './lib/import/types'
 import Header from './components/Header'
@@ -41,15 +40,6 @@ export default function App() {
   useEffect(() => {
     if (loaded) publishOutbox(profile)
   }, [loaded, profile])
-
-  // Complete a Google Drive OAuth redirect if we came back with a code.
-  useEffect(() => {
-    if (!loaded) return
-    const clientId = useAppStore.getState().settings.oauth?.googleClientId
-    if (clientId && new URLSearchParams(window.location.search).has('code')) {
-      handleOAuthRedirect(clientId).catch(() => {})
-    }
-  }, [loaded])
 
   return (
     <div className="flex h-full flex-col">
