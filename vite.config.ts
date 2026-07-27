@@ -3,8 +3,13 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// GitHub Pages serves this project under /JobMate/; local dev/preview stays at
+// root. The deploy workflow sets GITHUB_PAGES=true.
+const base = process.env.GITHUB_PAGES ? '/JobMate/' : '/'
+
 // https://vite.dev/config/
 export default defineConfig({
+  base,
   plugins: [
     react(),
     tailwindcss(),
@@ -19,7 +24,8 @@ export default defineConfig({
         theme_color: '#0ea5e9',
         background_color: '#0f172a',
         display: 'standalone',
-        start_url: '/',
+        start_url: base,
+        scope: base,
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
         ],
@@ -27,7 +33,7 @@ export default defineConfig({
       workbox: {
         // Cache the app shell for offline board use; API calls are never cached.
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
-        navigateFallback: '/index.html',
+        navigateFallback: base + 'index.html',
       },
     }),
   ],

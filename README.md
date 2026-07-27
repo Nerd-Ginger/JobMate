@@ -5,6 +5,11 @@ All data lives on your device (IndexedDB) — no accounts, no servers. Bring you
 own Anthropic API key for the AI features. See [`JobTracker_Plan.md`](./JobTracker_Plan.md)
 for the full product plan.
 
+**Live:** https://nerd-ginger.github.io/JobMate/ — auto-deploys from `main` via
+GitHub Actions. First-time setup: in the repo, **Settings → Pages → Build and
+deployment → Source: GitHub Actions** (one-time toggle), then re-run the deploy
+workflow.
+
 ## Features
 
 **Board & tracking**
