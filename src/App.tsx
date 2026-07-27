@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useAppStore } from './store/useAppStore'
 import { processInbox, publishOutbox } from './lib/bridge'
 import type { View } from './types-ui'
@@ -8,9 +8,12 @@ import Board from './components/Board'
 import ApplicationModal from './components/ApplicationModal'
 import ApplicationDrawer from './components/ApplicationDrawer'
 import ImportModal from './components/ImportModal'
-import SettingsView from './components/SettingsView'
-import InsightsView from './components/InsightsView'
-import DiscoverView from './components/DiscoverView'
+
+// Insights pulls in Recharts (~heavy) and Discover/Settings aren't the landing
+// view — lazy-load them so the initial board bundle stays lean.
+const SettingsView = lazy(() => import('./components/SettingsView'))
+const InsightsView = lazy(() => import('./components/InsightsView'))
+const DiscoverView = lazy(() => import('./components/DiscoverView'))
 
 export default function App() {
   const load = useAppStore((s) => s.load)
@@ -55,12 +58,16 @@ export default function App() {
           <p className="px-4 text-slate-500">Loading…</p>
         ) : view === 'board' ? (
           <Board onEdit={(app) => setDrawerId(app.id)} />
-        ) : view === 'discover' ? (
-          <DiscoverView />
-        ) : view === 'insights' ? (
-          <InsightsView />
         ) : (
-          <SettingsView />
+          <Suspense fallback={<p className="px-6 text-slate-500">Loading…</p>}>
+            {view === 'discover' ? (
+              <DiscoverView />
+            ) : view === 'insights' ? (
+              <InsightsView />
+            ) : (
+              <SettingsView />
+            )}
+          </Suspense>
         )}
       </main>
 
