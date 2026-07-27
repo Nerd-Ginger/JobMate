@@ -1,8 +1,58 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { spend } from '../lib/metrics'
+import { extractResumeText, ResumeExtractError } from '../lib/resume/extract'
 import { inputClass, labelClass, btnPrimary } from './ui'
 import type { WatchlistEntry } from '../types'
+
+function ResumeUpload() {
+  const updateProfile = useAppStore((s) => s.updateProfile)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-uploading the same file
+    if (!file) return
+    setBusy(true)
+    setError(null)
+    try {
+      const text = await extractResumeText(file)
+      if (!text.trim()) throw new ResumeExtractError('No text found in that file.')
+      await updateProfile({ resumeText: text, resumeFileName: file.name })
+    } catch (err) {
+      setError(
+        err instanceof ResumeExtractError || err instanceof Error
+          ? err.message
+          : 'Could not read that file.',
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 disabled:opacity-50"
+      >
+        {busy ? 'Reading…' : 'Upload .docx / .pdf'}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="hidden"
+        onChange={handleFile}
+      />
+      {error && <span className="text-xs text-rose-400">{error}</span>}
+    </div>
+  )
+}
 
 function Section({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
   return (
@@ -69,12 +119,18 @@ export default function SettingsView() {
             <textarea
               className={`${inputClass} min-h-40 resize-y font-mono text-xs`}
               value={profile.resumeText ?? ''}
-              onChange={(e) => store.updateProfile({ resumeText: e.target.value })}
-              placeholder="Paste your resume text here…"
+              onChange={(e) =>
+                store.updateProfile({ resumeText: e.target.value, resumeFileName: undefined })
+              }
+              placeholder="Paste your resume text here, or upload a .docx / .pdf below…"
             />
-            <p className="mt-1 text-xs text-slate-500">
-              {(profile.resumeText?.length ?? 0).toLocaleString()} characters
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <ResumeUpload />
+              <span className="text-xs text-slate-500">
+                {(profile.resumeText?.length ?? 0).toLocaleString()} characters
+                {profile.resumeFileName ? ` · from ${profile.resumeFileName}` : ''}
+              </span>
+            </div>
           </div>
         </Section>
 
