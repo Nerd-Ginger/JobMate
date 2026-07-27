@@ -15,6 +15,11 @@ dist-ssr
 # Claude Code local tooling
 .claude
 
+# Personal data / local test fixtures — never commit to a public repo
+*.pdf
+*.docx
+Daniel_Wright_Resume_v6.*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
